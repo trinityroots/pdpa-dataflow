@@ -1,3 +1,56 @@
+<script>
+  /* eslint-disable no-restricted-globals */
+  let intervalId;
+
+  function addButtons() {
+    const menuElement = document.getElementsByClassName("sto-1amsdi0")[0];
+
+    if (menuElement) {
+      clearInterval(intervalId);
+    } else {
+      return;
+    }
+
+    let div = document.createElement("div");
+    div.innerHTML = `<button id='btn-docs'>Diagram documentation</button><button id='btn-trial'><span>Free trial</span></button>`;
+    menuElement.after(div);
+
+    const btnDocs = document.getElementById("btn-docs");
+    btnDocs.addEventListener("click", function () {
+      window.open("https://roots.tech", "_blank");
+    });
+
+    const btnTrial = document.getElementById("btn-trial");
+    btnTrial.addEventListener("click", function () {
+      window.open("https://roots.tech", "_blank");
+    });
+
+    history.pushState = (f =>
+      function pushState() {
+        let ret = f.apply(this, arguments);
+        window.dispatchEvent(new Event("pushstate"));
+        window.dispatchEvent(new Event("locationchange"));
+        return ret;
+      })(history.pushState);
+
+    history.replaceState = (f =>
+      function replaceState() {
+        let ret = f.apply(this, arguments);
+        window.dispatchEvent(new Event("replacestate"));
+        window.dispatchEvent(new Event("locationchange"));
+        return ret;
+      })(history.replaceState);
+
+    window.addEventListener("popstate", () => {
+      window.dispatchEvent(new Event("locationchange"));
+    });
+  }
+
+  window.addEventListener("load", function () {
+    intervalId = setInterval(addButtons, 100);
+  });
+</script>
+
 <style>
   @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap");
 
@@ -45,19 +98,19 @@
     transition: background-color 0.2s ease-out;
   }
 
-  .css-p1dfi6 {
+  .sto-p1dfi6 {
     outline: none;
     justify-content: flex-end !important;
     align-items: center !important;
   }
 
-  .css-pvky73,
-  .css-11sh1n2,
-  .css-c3junj {
+  .sto-1amsdi0,
+  .sto-102is01,
+  .sto-c3junj {
     display: none !important;
   }
 
-  .css-l8z9zc {
+  .sto-l8z9zc {
     margin: 0 auto;
   }
 </style>
