@@ -26,17 +26,14 @@ import './button.css';
  */
 export const Swimlane = ({ primary, backgroundColor, size, label, ...props }) => {
 
-  const handleInputChange = () => {}
-
-  const defaultValues = {
-    stage: "",
-    location: "",
-    details: "",
-    step: 0,
-  };
-
-  const [formValues, setFormValues] = useState(defaultValues)
-  const divGraph = useRef(null);
+  function removeObjectWithId(arr, id) {
+    // Making a copy with the Array from() method
+    const arrCopy = Array.from(arr);
+  
+    const objWithIdIndex = arrCopy.findIndex((obj) => obj.id === id);
+    arrCopy.splice(objWithIdIndex, 1);
+    return arrCopy;
+  }
 
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 70 },
@@ -61,16 +58,18 @@ export const Swimlane = ({ primary, backgroundColor, size, label, ...props }) =>
             .forEach(
               (c) => (thisRow[c.field] = params.getValue(params.id, c.field))
             );
-  
-          return alert(JSON.stringify(thisRow, null, 4));
+          console.log(thisRow)
+          const newDataGridRows = removeObjectWithId(dataGridRows, thisRow.id);
+          setDataGridRows(newDataGridRows);
+          return true;
         };
   
-        return <DeleteIcon></DeleteIcon>;
+        return <DeleteIcon onClick={onClick}></DeleteIcon>;
       }
     },
   ];
   
-  const rows = [
+  const defaultRows = [
     { id: 1, stage: 'Origin', location: 'External', details: 'Client Send Data: Database', step: 1 },
     { id: 2, stage: 'Collect', location: 'Organization', details: 'BA Store raw data in org library: CSV', step: 2 },
     // { id: 3, stage: 'Process', location: 'Local', details: 'Data clean and analysis: CSV', step: 3 },
@@ -78,6 +77,30 @@ export const Swimlane = ({ primary, backgroundColor, size, label, ...props }) =>
     // { id: 5, stage: 'Share', location: 'Organization', details: 'BA share the result data to stakeholder as commentator: googlesheet', step: 5 },
     // { id: 6, stage: 'Destroy', location: 'None', details: '- No Policy: -', step: 6 },
   ];
+
+  const defaultValues = {
+    id: 0,
+    stage: "",
+    location: "",
+    details: "",
+    step: 0,
+  };
+
+  const [formValues, setFormValues] = useState(defaultValues)
+  const [dataGridRows, setDataGridRows] = useState(defaultRows)
+  const divGraph = useRef(null);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormValues({
+      ...formValues,
+      [name]: value,
+    });
+  };
+
+  const handleAddStep = () => {
+    setDataGridRows([...dataGridRows, formValues])
+  };
 
   useEffect(() => {
     if (!mxClient.isBrowserSupported()) {
@@ -98,6 +121,9 @@ export const Swimlane = ({ primary, backgroundColor, size, label, ...props }) =>
       }
     }
   });
+
+  useEffect(() => {
+  }, [dataGridRows]);
   
   return (
     <>
@@ -111,6 +137,18 @@ export const Swimlane = ({ primary, backgroundColor, size, label, ...props }) =>
               </Typography>
               <FormControl fullWidth>
                 <Grid container direction={"column"} spacing={2} alignItems="center" fullWidth>
+                <Grid item>
+                    <TextField
+                      id="id-input"
+                      name="id"
+                      label="ID"
+                      type="number"
+                      value={formValues.id}
+                      onChange={handleInputChange}
+                      required
+                      fullWidth
+                    />
+                  </Grid>                
                   <Grid item>
                     <TextField
                       id="stage-input"
@@ -160,7 +198,7 @@ export const Swimlane = ({ primary, backgroundColor, size, label, ...props }) =>
                     />
                   </Grid>
                   <Grid item>
-                    <Button variant="contained" color="primary">
+                    <Button variant="contained" color="primary" onClick={handleAddStep}>
                       Add Step
                     </Button>
                   </Grid>
@@ -174,7 +212,7 @@ export const Swimlane = ({ primary, backgroundColor, size, label, ...props }) =>
           <div style={{ height: 400, width: '100%' }}>
             <DataGrid
               experimentalFeatures={{ newEditingApi: true }}
-              rows={rows}
+              rows={dataGridRows}
               columns={columns}
               pageSize={5}
               rowsPerPageOptions={[5]}
