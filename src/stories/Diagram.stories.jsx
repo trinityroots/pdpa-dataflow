@@ -4,7 +4,7 @@ import { Swimlane } from './Swimlane';
 
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {
-  title: 'Swimlane',
+  title: 'Diagrams/Swimlane',
   component: Swimlane,
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {
