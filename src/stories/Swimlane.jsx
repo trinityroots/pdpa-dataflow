@@ -122,6 +122,7 @@ export const Swimlane = ({ primary, backgroundColor, size, label, ...props }) =>
 					graph.setAllowDanglingEdges(false);
 					// End-states are no valid sources
 					var previousIsValidSource = graph.isValidSource;
+          debugger;
 					graph.isValidSource = function(cell)
 					{
 						if (previousIsValidSource.apply(this, arguments))
@@ -315,43 +316,43 @@ export const Swimlane = ({ primary, backgroundColor, size, label, ...props }) =>
     { field: 'id', headerName: 'ID', width: 70 },
     { field: 'stage', headerName: 'Stage', width: 130, editable: true },
     { field: 'location', headerName: 'Location', width: 130, editable: true },
-    { field: 'details', headerName: 'Details', width: 500, editable: true },
-    { field: 'step', headerName: 'Step', width: 70, editable: true },
-    {
-      field: "action",
-      headerName: "",
-      sortable: false,
-      renderCell: (params) => {
-        const onClick = (e) => {
-          e.stopPropagation(); // don't select this row after clicking
+    { field: 'details', headerName: 'Details', width: 200, editable: true },
+    { field: 'step', headerName: 'Step', width: 70, editable: true }
+    // {
+    //   field: "action",
+    //   headerName: "",
+    //   sortable: false,
+    //   renderCell: (params) => {
+    //     const onClick = (e) => {
+    //       e.stopPropagation(); // don't select this row after clicking
   
-          const api: GridApi = params.api;
-          const thisRow: Record<string, GridCellValue> = {};
+    //       const api: GridApi = params.api;
+    //       const thisRow: Record<string, GridCellValue> = {};
   
-          api
-            .getAllColumns()
-            .filter((c) => c.field !== "__check__" && !!c)
-            .forEach(
-              (c) => (thisRow[c.field] = params.getValue(params.id, c.field))
-            );
-          console.log(thisRow)
-          const newDataGridRows = removeObjectWithId(dataGridRows, thisRow.id);
-          setDataGridRows(newDataGridRows);
-          return true;
-        };
+    //       api
+    //         .getAllColumns()
+    //         .filter((c) => c.field !== "__check__" && !!c)
+    //         .forEach(
+    //           (c) => (thisRow[c.field] = params.getValue(params.id, c.field))
+    //         );
+    //       console.log(thisRow)
+    //       const newDataGridRows = removeObjectWithId(dataGridRows, thisRow.id);
+    //       setDataGridRows(newDataGridRows);
+    //       return true;
+    //     };
   
-        return <DeleteIcon onClick={onClick}></DeleteIcon>;
-      }
-    },
+    //     return <DeleteIcon onClick={onClick}></DeleteIcon>;
+    //   }
+    // },
   ];
   
   const defaultRows = [
-    { id: 1, stage: 'Origin', location: 'External', details: 'Client Send Data: Database', step: 1 },
-    { id: 2, stage: 'Collect', location: 'Organization', details: 'BA Store raw data in org library: CSV', step: 2 },
-    // { id: 3, stage: 'Process', location: 'Local', details: 'Data clean and analysis: CSV', step: 3 },
-    // { id: 4, stage: 'Store', location: 'Organization', details: 'Data store analysis in ORG library: googlesheet', step: 4 },
-    // { id: 5, stage: 'Share', location: 'Organization', details: 'BA share the result data to stakeholder as commentator: googlesheet', step: 5 },
-    // { id: 6, stage: 'Destroy', location: 'None', details: '- No Policy: -', step: 6 },
+    { id: 1, stage: 'Origin', location: '', details: '', step: 1 },
+    { id: 2, stage: 'Collect', location: '', details: '', step: 2 },
+    { id: 3, stage: 'Process', location: '', details: '', step: 3 },
+    { id: 4, stage: 'Store', location: '', details: '', step: 4 },
+    { id: 5, stage: 'Share', location: '', details: '', step: 5 },
+    { id: 6, stage: 'Destroy', location: '', details: '', step: 6 },
   ];
 
   const defaultValues = {
@@ -389,7 +390,7 @@ export const Swimlane = ({ primary, backgroundColor, size, label, ...props }) =>
     <>
       <Grid container spacing={2}>
 
-        <Grid item xs={2}>
+        {/* <Grid item xs={2}>
           <Card variant="outlined" style={{ height: 400 }}>
             <CardContent>
               <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
@@ -466,23 +467,24 @@ export const Swimlane = ({ primary, backgroundColor, size, label, ...props }) =>
               </FormControl>
             </CardContent>
           </Card>
-        </Grid>
+        </Grid> */}
         
-        <Grid item xs={10}>
-          <div style={{ height: 400, width: '100%' }}>
+        <Grid item xs={4}>
+          <div style={{ height: 500, width: '100%' }}>
             <DataGrid
               experimentalFeatures={{ newEditingApi: true }}
               rows={dataGridRows}
               columns={columns}
-              pageSize={5}
-              rowsPerPageOptions={[5]}
+              pageSize={6}
+              rowsPerPageOptions={[6]}
             />
           </div>
         </Grid>
 
       </Grid>
-
-      <div className="graph-container" ref={divGraph} id="divGraph" />
+      <Grid item xs={4}>
+        <div className="graph-container" ref={divGraph} id="divGraph" />
+      </Grid>
     </>
   );
 };
