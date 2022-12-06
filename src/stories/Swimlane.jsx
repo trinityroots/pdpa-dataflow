@@ -1,23 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import { mxGraph, mxRubberband, mxClient, mxUtils, mxEvent, mxSwimlaneManager, mxStackLayout, mxLayoutManager, mxGraphModel, mxPoint, mxConstants, mxPerimeter, mxEdgeStyle } from "mxgraph-js";
-import { DataGrid, GridColDef, GridValueGetterParams } from '@mui/x-data-grid';
-import { CardContent } from '@mui/material'
+import { mxGraph, mxRubberband, mxClient, mxUtils, mxEvent, mxCell, mxSwimlaneManager, mxStackLayout, mxLayoutManager, mxGraphModel, mxPoint, mxConstants, mxPerimeter, mxEdgeStyle } from "mxgraph-js";
+import { DataGrid } from '@mui/x-data-grid';
 import Grid from "@material-ui/core/Grid";
-import TextField from "@material-ui/core/TextField";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import FormControl from "@material-ui/core/FormControl";
-import FormLabel from "@material-ui/core/FormLabel";
-import RadioGroup from "@material-ui/core/RadioGroup";
-import Radio from "@material-ui/core/Radio";
-import Select from "@material-ui/core/Select";
-import MenuItem from "@material-ui/core/MenuItem";
-import Slider from "@material-ui/core/Slider";
-import Button from "@material-ui/core/Button";
-import Card from '@mui/material/Card';
-import CardHeader from '@mui/material/CardHeader';
-import Typography from '@mui/material/Typography';
-import DeleteIcon from '@mui/icons-material/Delete';
 
 import './button.css';
 
@@ -26,457 +11,209 @@ import './button.css';
  */
 export const Swimlane = ({ primary, backgroundColor, size, label, ...props }) => {
 
-  function removeObjectWithId(arr, id) {
-    // Making a copy with the Array from() method
-    const arrCopy = Array.from(arr);
+  const columns = [
+    { field: 'id', headerName: 'ID', width: 70 },
+    { field: 'stage', headerName: 'Stage', width: 130, editable: false },
+    { field: 'location', headerName: 'Location', width: 130, editable: true, type: "singleSelect", valueOptions: ["External", "Organization", "Local", "None"]},
+    { field: 'details', headerName: 'Details', width: 200, editable: true },
+    { field: 'step', headerName: 'Step', width: 70, editable: true, type: "singleSelect", valueOptions: [0, 1, 2, 3, 4, 5, 6] }
+  ];
   
-    const objWithIdIndex = arrCopy.findIndex((obj) => obj.id === id);
-    arrCopy.splice(objWithIdIndex, 1);
-    return arrCopy;
-  }
+  const defaultRows = [
+    { id: 1, stage: 'Origin', location: 'None', details: '', step: 1 },
+    { id: 2, stage: 'Collect', location: 'None', details: '', step: 2 },
+    { id: 3, stage: 'Process', location: 'None', details: '', step: 3 },
+    { id: 4, stage: 'Store', location: 'None', details: '', step: 4 },
+    { id: 5, stage: 'Share', location: 'None', details: '', step: 5 },
+    { id: 6, stage: 'Destroy', location: 'None', details: '', step: 6 },
+  ];
 
-  const setDiagramStyles = (graph) => {
-    // Auto-resizes the container
-    graph.border = 80;
-    graph.getView().translate = new mxPoint(graph.border/2, graph.border/2);
-    graph.setResizeContainer(true);
-    graph.graphHandler.setRemoveCellsFromParent(false);
+  const [dataGridRows, setDataGridRows] = useState(defaultRows);
 
-    // Changes the default vertex style in-place
+  
+  const dataGridRowsRef = useRef();
+  dataGridRowsRef.current = dataGridRows;
+  const divGraph = useRef(null);
+
+  const _setStyles = (graph) => {
     var style = graph.getStylesheet().getDefaultVertexStyle();
-    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_SWIMLANE;
-    style[mxConstants.STYLE_VERTICAL_ALIGN] = 'middle';
     style[mxConstants.STYLE_LABEL_BACKGROUNDCOLOR] = 'white';
-    style[mxConstants.STYLE_FONTSIZE] = 11;
-    style[mxConstants.STYLE_STARTSIZE] = 22;
-    style[mxConstants.STYLE_HORIZONTAL] = false;
+    style[mxConstants.STYLE_FONTSIZE] = 20;
     style[mxConstants.STYLE_FONTCOLOR] = 'black';
-    style[mxConstants.STYLE_STROKECOLOR] = 'black';
+    style[mxConstants.WORD_WRAP] = 'break-word';
     delete style[mxConstants.STYLE_FILLCOLOR];
 
-    style = mxUtils.clone(style);
-    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE;
-    style[mxConstants.STYLE_FONTSIZE] = 10;
-    style[mxConstants.STYLE_ROUNDED] = true;
-    style[mxConstants.STYLE_HORIZONTAL] = true;
-    style[mxConstants.STYLE_VERTICAL_ALIGN] = 'middle';
-    delete style[mxConstants.STYLE_STARTSIZE];
-    style[mxConstants.STYLE_LABEL_BACKGROUNDCOLOR] = 'none';
-    graph.getStylesheet().putCellStyle('process', style);
-    
-    style = mxUtils.clone(style);
-    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_ELLIPSE;
-    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.EllipsePerimeter;
-    delete style[mxConstants.STYLE_ROUNDED];
-    graph.getStylesheet().putCellStyle('state', style);
-                    
-    style = mxUtils.clone(style);
-    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RHOMBUS;
-    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RhombusPerimeter;
-    style[mxConstants.STYLE_VERTICAL_ALIGN] = 'top';
-    style[mxConstants.STYLE_SPACING_TOP] = 40;
-    style[mxConstants.STYLE_SPACING_RIGHT] = 64;
-    graph.getStylesheet().putCellStyle('condition', style);
-            
-    style = mxUtils.clone(style);
-    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_DOUBLE_ELLIPSE;
-    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.EllipsePerimeter;
-    style[mxConstants.STYLE_SPACING_TOP] = 28;
-    style[mxConstants.STYLE_FONTSIZE] = 14;
-    style[mxConstants.STYLE_FONTSTYLE] = 1;
-    delete style[mxConstants.STYLE_SPACING_RIGHT];
-    graph.getStylesheet().putCellStyle('end', style);
-    
     style = graph.getStylesheet().getDefaultEdgeStyle();
     style[mxConstants.STYLE_EDGE] = mxEdgeStyle.ElbowConnector;
     style[mxConstants.STYLE_ENDARROW] = mxConstants.ARROW_BLOCK;
     style[mxConstants.STYLE_ROUNDED] = true;
     style[mxConstants.STYLE_FONTCOLOR] = 'black';
     style[mxConstants.STYLE_STROKECOLOR] = 'black';
-    
-    style = mxUtils.clone(style);
-    style[mxConstants.STYLE_DASHED] = true;
-    style[mxConstants.STYLE_ENDARROW] = mxConstants.ARROW_OPEN;
-    style[mxConstants.STYLE_STARTARROW] = mxConstants.ARROW_OVAL;
-    graph.getStylesheet().putCellStyle('crossover', style);
-        
-    // Installs double click on middle control point and
-    // changes style of edges between empty and this value
-    graph.alternateEdgeStyle = 'elbow=vertical';
-    return graph;    
   }
 
-  const drawDiagram = () => {
-    if (!mxClient.isBrowserSupported()) {
-      mxUtils.error("Browser is not supported!", 200, false);
-    } else {
+  const _drawCFBkg = (graph, layer, size, start) => {
+    if (!start) {
+      start = 20;
+    }
+    var gridItems = [];
+    for (let i = 0; i < 4; i++){
+      for (let j = 0; j < 6; j++){
+        gridItems.push({
+            loc: i,
+            phase: j,
+            x: start + (size * i),
+            y: start + (size * j / 2),
+            size: size,
+            vertex: graph.insertVertex(layer, null, null, start + (size * i), start + (size * j / 2), size , size / 2)
+          });
+      }
+    }
+    // Add Vertical Text elements
+    var vertOffset = 35;
+    graph.insertVertex(layer, null, 'Origin', start - 100, start + vertOffset, 80, 30, 'strokeColor=none');
+    graph.insertVertex(layer, null, 'Collect', start - 100, start + (size / 2) + vertOffset, 80, 30, 'strokeColor=none');
+    graph.insertVertex(layer, null, 'Process', start - 100, start + (size * 2 / 2) + vertOffset, 80, 30, 'strokeColor=none');
+    graph.insertVertex(layer, null, 'Store', start - 100, start + (size * 3 / 2) + vertOffset, 80, 30, 'strokeColor=none');
+    graph.insertVertex(layer, null, 'Share', start - 100, start + (size * 4 / 2) + vertOffset, 80, 30, 'strokeColor=none');
+    graph.insertVertex(layer, null, 'Destroy', start - 100, start + (size * 5 / 2) + vertOffset, 80, 30, 'strokeColor=none');
+
+    // Add Horizontal Text elements
+    var horOffset = 60;
+    graph.insertVertex(layer, null, 'External', start + horOffset, start - 50, 80, 30, 'strokeColor=none');
+    graph.insertVertex(layer, null, 'Organization', start + size + horOffset, start - 50, 80, 30, 'strokeColor=none');
+    graph.insertVertex(layer, null, 'Local', start + (size * 2) + horOffset, start - 50, 80, 30, 'strokeColor=none');
+    graph.insertVertex(layer, null, 'None', start + (size * 3) + horOffset, start - 50, 80, 30, 'strokeColor=none');
+
+    return gridItems;
+  }
+
+  const _drawDiagram = (graph, layer, objects, grid) => {
+
+    var xDef = {
+      'Origin': 0,
+      'Collect': 1,
+      'Process': 2,
+      'Store': 3,
+      'Share': 4,
+      'Destroy': 5
+    };
+
+    var yDef = {
+      'External': 0,
+      'Organization': 1,
+      'Local': 2,
+      'None': 3 
+    };
+
+    const positions = [];
+    for (let i = 0; i < objects.length; i++) {
+      
+      let result = grid.find(g => {
+        let x = xDef[objects[i].stage]
+        let y = yDef[objects[i].location]
+        return (g.phase === x && g.loc === y)
+      })
+      debugger;
+      positions.push({
+        x: result.x,
+        y: result.y,
+        size: result.size
+      });
+    }
+
+    var vertexes = [];
+    for (let i = 0; i < objects.length; i++) {
+      vertexes.push(graph.insertVertex(layer, null, objects[i].details, positions[i].x + (positions[i].size / 5), positions[i].y + (positions[i].size / 10), 140, 60, 'fontSize=15'));
+    }
+    
+    for (let i = 0; i < vertexes.length - 1; i++) {
+      graph.insertEdge(layer, null, '', vertexes[i], vertexes[i+1], 'strokeWidth=3;strokeColor=black');
+    }
+  }
+
+  const drawDiagram = (dataGridRows) => {
+    
+    // Checks if the browser is supported
+    if (!mxClient.isBrowserSupported())
+    {
+      // Displays an error message if the browser is not supported.
+      mxUtils.error('Browser is not supported!', 200, false);
+    }
+    else
+    {
+      // create a copy
+      var copiedDataGridRows = JSON.parse(JSON.stringify(dataGridRows));
+      copiedDataGridRows.sort((a, b) => a.step > b.step ? 1 : -1)
+      // clear drawing div
+      if(divGraph.current.children.length){
+        divGraph.current.removeChild(divGraph.current.children[0]);
+      }
+      // Disables the built-in context menu
       mxEvent.disableContextMenu(divGraph.current);
-      const graph = new mxGraph(divGraph.current);
+      // Add 2 layers
+      var root = new mxCell();
+      var layer0 = root.insert(new mxCell());
+      var layer1 = root.insert(new mxCell()); 
+      var model = new mxGraphModel(root);
+
+      var graph = new mxGraph(divGraph.current, model);
+      // Set graph uneditable
+      // graph.setEnabled(false)
+      // Auto resizes container
+      graph.setResizeContainer(true);
+
+      graph.alternateEdgeStyle = 'elbow=vertical';
+      // Enables rubberband selection
       new mxRubberband(graph);
-      const parent = graph.getDefaultParent();
-      var model = graph.getModel();
-      setDiagramStyles(graph);
-      if (graph.isEnabled()) {
-        	// Allows new connections but no dangling edges
-					graph.setConnectable(true);
-					graph.setAllowDanglingEdges(false);
-					// End-states are no valid sources
-					var previousIsValidSource = graph.isValidSource;
-          debugger;
-					graph.isValidSource = function(cell)
-					{
-						if (previousIsValidSource.apply(this, arguments))
-						{
-							var style = this.getModel().getStyle(cell);
-							
-							return style == null || !(style == 'end' || style.indexOf('end') == 0);
-						}
-
-						return false;
-					};
-					graph.isValidTarget = function(cell)
-					{
-						var style = this.getModel().getStyle(cell);
-						
-						return !this.getModel().isEdge(cell) && !this.isSwimlane(cell) &&
-							(style == null || !(style == 'state' || style.indexOf('state') == 0));
-					};
-					graph.setDropEnabled(true);
-					graph.setSplitEnabled(false);
-					graph.isValidDropTarget = function(target, cells, evt)
-					{
-						if (this.isSplitEnabled() && this.isSplitTarget(target, cells, evt))
-						{
-							return true;
-						}
-						
-						var model = this.getModel();
-						var lane = false;
-						var pool = false;
-						var cell = false;
-						
-						// Checks if any lanes or pools are selected
-						for (var i = 0; i < cells.length; i++)
-						{
-							var tmp = model.getParent(cells[i]);
-							lane = lane || this.isPool(tmp);
-							pool = pool || this.isPool(cells[i]);
-							
-							cell = cell || !(lane || pool);
-						}
-						
-						return !pool && cell != lane && ((lane && this.isPool(target)) ||
-							(cell && this.isPool(model.getParent(target))));
-					};
-					graph.isPool = function(cell)
-					{
-						var model = this.getModel();
-						var parent = model.getParent(cell);
-					
-						return parent != null && model.getParent(parent) == model.getRoot();
-					};
-					graph.model.getStyle = function(cell)
-					{
-						var style = mxGraphModel.prototype.getStyle.apply(this, arguments);
-					
-						if (graph.isCellCollapsed(cell))
-						{
-							if (style != null)
-							{
-								style += ';';
-							}
-							else
-							{
-								style = '';
-							}
-							
-							style += 'horizontal=1;align=left;spacingLeft=14;';
-						}
-						
-						return style;
-					};
-					var foldingHandler = function(sender, evt)
-					{
-						var cells = evt.getProperty('cells');
-						
-						for (var i = 0; i < cells.length; i++)
-						{
-							var geo = graph.model.getGeometry(cells[i]);
-
-							if (geo.alternateBounds != null)
-							{
-								geo.width = geo.alternateBounds.width;
-							}
-						}
-					};
-
-					graph.addListener(mxEvent.FOLD_CELLS, foldingHandler);
-      }
-
-      new mxSwimlaneManager(graph);
-      var layout = new mxStackLayout(graph, false);
-      layout.resizeParent = true;
-      layout.fill = true;
-      layout.isVertexIgnored = function(vertex)
-      {
-        return !graph.isSwimlane(vertex);
-      }
-      var layoutMgr = new mxLayoutManager(graph);
-
-      layoutMgr.getLayout = function(cell)
-      {
-        if (!model.isEdge(cell) && graph.getModel().getChildCount(cell) > 0 &&
-          (model.getParent(cell) == model.getRoot() || graph.isPool(cell)))
-        {
-          layout.fill = graph.isPool(cell);
-          
-          return layout;
-        }
-        
-        return null;
-      };
-
-      model.beginUpdate();
-
+      // Gets the default parent for inserting new cells. This
+      // is normally the first child of the root (ie. layer 0).
+      // var parent = graph.getDefaultParent();
+      // Adds cells to the model in a single step
+      graph.getModel().beginUpdate();
       try {
-        var pool1 = graph.insertVertex(parent, null, 'Pool 1', 0, 0, 640, 0);
-        pool1.setConnectable(false);
-
-        var lane1a = graph.insertVertex(pool1, null, 'Lane A', 0, 0, 640, 110);
-        lane1a.setConnectable(false);
-
-        var lane1b = graph.insertVertex(pool1, null, 'Lane B', 0, 0, 640, 110);
-        lane1b.setConnectable(false);
-
-        var pool2 = graph.insertVertex(parent, null, 'Pool 2', 0, 0, 640, 0);
-        pool2.setConnectable(false);
-
-        var lane2a = graph.insertVertex(pool2, null, 'Lane A', 0, 0, 640, 140);
-        lane2a.setConnectable(false);
-
-        var lane2b = graph.insertVertex(pool2, null, 'Lane B', 0, 0, 640, 110);
-        lane2b.setConnectable(false);
-        
-        var start1 = graph.insertVertex(lane1a, null, null, 40, 40, 30, 30, 'state');
-        var end1 = graph.insertVertex(lane1a, null, 'A', 560, 40, 30, 30, 'end');
-        
-        var step1 = graph.insertVertex(lane1a, null, 'Contact\nProvider', 90, 30, 80, 50, 'process');
-        var step11 = graph.insertVertex(lane1a, null, 'Complete\nAppropriate\nRequest', 190, 30, 80, 50, 'process');
-        var step111 = graph.insertVertex(lane1a, null, 'Receive and\nAcknowledge', 385, 30, 80, 50, 'process');
-        
-        var start2 = graph.insertVertex(lane2b, null, null, 40, 40, 30, 30, 'state');
-        
-        var step2 = graph.insertVertex(lane2b, null, 'Receive\nRequest', 90, 30, 80, 50, 'process');
-        var step22 = graph.insertVertex(lane2b, null, 'Refer to Tap\nSystems\nCoordinator', 190, 30, 80, 50, 'process');
-        
-        var step3 = graph.insertVertex(lane1b, null, 'Request 1st-\nGate\nInformation', 190, 30, 80, 50, 'process');
-        var step33 = graph.insertVertex(lane1b, null, 'Receive 1st-\nGate\nInformation', 290, 30, 80, 50, 'process');
-        
-        var step4 = graph.insertVertex(lane2a, null, 'Receive and\nAcknowledge', 290, 20, 80, 50, 'process');
-        var step44 = graph.insertVertex(lane2a, null, 'Contract\nConstraints?', 400, 20, 50, 50, 'condition');
-        var step444 = graph.insertVertex(lane2a, null, 'Tap for gas\ndelivery?', 480, 20, 50, 50, 'condition');
-        
-        var end2 = graph.insertVertex(lane2a, null, 'B', 560, 30, 30, 30, 'end');
-        var end3 = graph.insertVertex(lane2a, null, 'C', 560, 84, 30, 30, 'end');
-        
-        var e = null;
-        
-        graph.insertEdge(lane1a, null, null, start1, step1);
-        graph.insertEdge(lane1a, null, null, step1, step11);
-        graph.insertEdge(lane1a, null, null, step11, step111);
-        
-        graph.insertEdge(lane2b, null, null, start2, step2);
-        graph.insertEdge(lane2b, null, null, step2, step22);
-        graph.insertEdge(parent, null, null, step22, step3);
-        
-        graph.insertEdge(lane1b, null, null, step3, step33);
-        graph.insertEdge(lane2a, null, null, step4, step44);
-        graph.insertEdge(lane2a, null, 'No', step44, step444, 'verticalAlign=bottom');
-        graph.insertEdge(parent, null, 'Yes', step44, step111, 'verticalAlign=bottom;horizontal=0;labelBackgroundColor=white;');
-        
-        graph.insertEdge(lane2a, null, 'Yes', step444, end2, 'verticalAlign=bottom');
-        e = graph.insertEdge(lane2a, null, 'No', step444, end3, 'verticalAlign=top');
-        e.geometry.points = [new mxPoint(step444.geometry.x + step444.geometry.width / 2,
-          end3.geometry.y + end3.geometry.height / 2)];
-        
-        graph.insertEdge(parent, null, null, step1, step2, 'crossover');
-        graph.insertEdge(parent, null, null, step3, step11, 'crossover');
-        e = graph.insertEdge(lane1a, null, null, step11, step33, 'crossover');
-        e.geometry.points = [new mxPoint(step33.geometry.x + step33.geometry.width / 2 + 20,
-              step11.geometry.y + step11.geometry.height * 4 / 5)];
-        graph.insertEdge(parent, null, null, step33, step4);
-        graph.insertEdge(lane1a, null, null, step111, end1);
-      } finally {
-        graph.getModel().endUpdate();
+        _setStyles(graph);
+        var gridItems = _drawCFBkg(graph, layer0, 240, 200);
+        _drawDiagram(graph, layer1, copiedDataGridRows, gridItems);
+      }
+      finally {
+        // Updates the display
+        graph.getModel().endUpdate();        
       }
     }
   }
 
-  const columns: GridColDef[] = [
-    { field: 'id', headerName: 'ID', width: 70 },
-    { field: 'stage', headerName: 'Stage', width: 130, editable: true },
-    { field: 'location', headerName: 'Location', width: 130, editable: true },
-    { field: 'details', headerName: 'Details', width: 200, editable: true },
-    { field: 'step', headerName: 'Step', width: 70, editable: true }
-    // {
-    //   field: "action",
-    //   headerName: "",
-    //   sortable: false,
-    //   renderCell: (params) => {
-    //     const onClick = (e) => {
-    //       e.stopPropagation(); // don't select this row after clicking
-  
-    //       const api: GridApi = params.api;
-    //       const thisRow: Record<string, GridCellValue> = {};
-  
-    //       api
-    //         .getAllColumns()
-    //         .filter((c) => c.field !== "__check__" && !!c)
-    //         .forEach(
-    //           (c) => (thisRow[c.field] = params.getValue(params.id, c.field))
-    //         );
-    //       console.log(thisRow)
-    //       const newDataGridRows = removeObjectWithId(dataGridRows, thisRow.id);
-    //       setDataGridRows(newDataGridRows);
-    //       return true;
-    //     };
-  
-    //     return <DeleteIcon onClick={onClick}></DeleteIcon>;
-    //   }
-    // },
-  ];
-  
-  const defaultRows = [
-    { id: 1, stage: 'Origin', location: '', details: '', step: 1 },
-    { id: 2, stage: 'Collect', location: '', details: '', step: 2 },
-    { id: 3, stage: 'Process', location: '', details: '', step: 3 },
-    { id: 4, stage: 'Store', location: '', details: '', step: 4 },
-    { id: 5, stage: 'Share', location: '', details: '', step: 5 },
-    { id: 6, stage: 'Destroy', location: '', details: '', step: 6 },
-  ];
-
-  const defaultValues = {
-    id: 0,
-    stage: "",
-    location: "",
-    details: "",
-    step: 0,
+  const updateDataGridRows = (newRow, oldRow) => {
+    var copiedDataGridRows = JSON.parse(JSON.stringify(dataGridRows));
+    const idx = copiedDataGridRows.findIndex((obj) => obj.id === newRow.id);
+    copiedDataGridRows.splice(idx, 1);
+    copiedDataGridRows.push(newRow);
+    copiedDataGridRows.sort((a, b) => a.id > b.id ? 1 : -1);
+    setDataGridRows(copiedDataGridRows);
+    return newRow;
   };
 
-  const [formValues, setFormValues] = useState(defaultValues)
-  const [dataGridRows, setDataGridRows] = useState(defaultRows)
-  const divGraph = useRef(null);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormValues({
-      ...formValues,
-      [name]: value,
-    });
-  };
-
-  const handleAddStep = () => {
-    setDataGridRows([...dataGridRows, formValues])
+  const updateProcessError = (error) => {
+    console.log(error);
   };
 
   useEffect(() => {
-    drawDiagram()
-  });
-
-  useEffect(() => {
+    drawDiagram(dataGridRows)
   }, [dataGridRows]);
   
   return (
     <>
       <Grid container spacing={2}>
-
-        {/* <Grid item xs={2}>
-          <Card variant="outlined" style={{ height: 400 }}>
-            <CardContent>
-              <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
-                Add a Step
-              </Typography>
-              <FormControl fullWidth>
-                <Grid container direction={"column"} spacing={2} alignItems="center" fullWidth>
-                <Grid item>
-                    <TextField
-                      id="id-input"
-                      name="id"
-                      label="ID"
-                      type="number"
-                      value={formValues.id}
-                      onChange={handleInputChange}
-                      required
-                      fullWidth
-                    />
-                  </Grid>                
-                  <Grid item>
-                    <TextField
-                      id="stage-input"
-                      name="stage"
-                      label="Stage"
-                      type="text"
-                      value={formValues.stage}
-                      onChange={handleInputChange}
-                      required
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid item>
-                    <TextField 
-                      id="location-input"
-                      name="location"
-                      label="Location"
-                      type="text"
-                      value={formValues.location}
-                      onChange={handleInputChange}
-                      required
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid item>
-                    <TextField 
-                      id="details-input"
-                      name="details"
-                      label="Details"
-                      type="text"
-                      value={formValues.details}
-                      onChange={handleInputChange}
-                      required
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid item>
-                    <TextField 
-                      id="step-input"
-                      name="step"
-                      label="Step"
-                      type="number"
-                      value={formValues.step}
-                      onChange={handleInputChange}
-                      required
-                      fullWidth
-                    />
-                  </Grid>
-                  <Grid item>
-                    <Button variant="contained" color="primary" onClick={handleAddStep}>
-                      Add Step
-                    </Button>
-                  </Grid>
-                </Grid>
-              </FormControl>
-            </CardContent>
-          </Card>
-        </Grid> */}
         
-        <Grid item xs={4}>
-          <div style={{ height: 500, width: '100%' }}>
+        <Grid item xs={6}>
+          <div style={{ height: 420, width: '100%' }}>
             <DataGrid
               experimentalFeatures={{ newEditingApi: true }}
               rows={dataGridRows}
               columns={columns}
               pageSize={6}
               rowsPerPageOptions={[6]}
+              processRowUpdate={updateDataGridRows}
+              onProcessRowUpdateError={updateProcessError}
             />
           </div>
         </Grid>
